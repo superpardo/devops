@@ -1,0 +1,55 @@
+version: '3'
+services:
+  coolturate_memcached_1:
+    container_name: 'coolturate_memcached_1'
+    image: memcached:latest
+    entrypoint:
+      - memcached
+      - -m 12288
+    ports:
+      - 57.128.86.143:11211:11211
+      - 10.0.2.143:11211:11211
+    volumes:
+      - ./memcache:/home/memcache
+      - /etc/timezone:/etc/timezone
+  coolturate_memcached_2:
+    container_name: 'coolturate_memcached_2'
+    image: memcached:latest
+    entrypoint:
+      - memcached
+      - -m 12288
+    ports:
+      - 57.128.86.143:11212:11211
+      - 10.0.2.143:11212:11211
+    volumes:
+      - ./memcache:/home/memcache
+      - /etc/timezone:/etc/timezone
+  coolturate_memcached_3:
+    container_name: 'coolturate_memcached_3'
+    image: memcached:latest
+    entrypoint:
+      - memcached
+      - -m 12288
+    ports:
+      - 57.128.86.143:11213:11211
+      - 10.0.2.143:11213:11211
+    volumes:
+      - ./memcache:/home/memcache
+      - /etc/timezone:/etc/timezone
+  coolturate_memcached_4:
+    container_name: 'coolturate_memcached_4'
+    image: memcached:latest
+    entrypoint:
+      - memcached
+      - -m 12288
+    ports:
+      - 57.128.86.143:11214:11211
+      - 10.0.2.143:11214:11211
+    volumes:
+      - ./memcache:/home/memcache
+      - /etc/timezone:/etc/timezone
+networks:
+  default:
+    external: true
+    name: coolturate_network
+

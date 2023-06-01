@@ -1,0 +1,84 @@
+version: "3.9"
+services:
+  production_coolturate_php:
+    container_name: 'production_coolturate_php'
+    image: wodby/drupal-php:8.1
+    restart: always
+    environment:
+      PHP_FPM_CLEAR_ENV: "no"
+      PHP_FPM_PM: "dynamic"
+      PHP_FPM_PM_MAX_CHILDREN: 128
+      PHP_FPM_PM_START_SERVERS: 32
+      PHP_FPM_PM_MIN_SPARE_SERVERS: 32
+      PHP_FPM_PM_MAX_SPARE_SERVERS: 128
+      PHP_FPM_PM_MAX_REQUESTS: 128
+      PHP_MEMORY_LIMIT: 512M
+      PHP_FPM_REQUEST_SLOWLOG_TIMEOUT: 15s
+    cap_add:
+      - SYS_PTRACE
+    volumes:
+      - ./:/var/www/html
+  production_coolturate_nginx:
+    container_name: 'production_coolturate_nginx'
+    image: wodby/nginx:latest
+    depends_on:
+      - production_coolturate_php
+    environment:
+      NGINX_CLIENT_MAX_BODY_SIZE: 128m
+      NGINX_STATIC_CONTENT_OPEN_FILE_CACHE: "off"
+      NGINX_ERROR_LOG_LEVEL: error
+      NGINX_BACKEND_HOST: production_coolturate_php
+      NGINX_BACKEND_PORT: 9000
+      NGINX_SERVER_ROOT: /var/www/html
+      NGINX_WORKER_CONNECTIONS: 1024
+      NGINX_CLIENT_BODY_BUFFER_SIZE: 32k
+      NGINX_CLIENT_HEADER_BUFFER_SIZE: 8k
+      NGINX_LARGE_CLIENT_HEADER_BUFFERS: 4 16k
+      NGINX_WORKER_PROCESSES: 16
+      NGINX_CLIENT_BODY_TIMEOUT: 15
+      NGINX_CLIENT_HEADER_TIMEOUT: 15
+      NGINX_KEEPALIVE_TIMEOUT: 2 2
+      NGINX_SEND_TIMEOUT: 15
+      NGINX_KEEPALIVE_REQUESTS: 128
+      NGINX_GZIP_COMP_LEVEL: 5
+      NGINX_FASTCGI_BUFFERS: 32 64k
+      NGINX_FASTCGI_BUFFER_SIZE: 64k
+      NGINX_FASTCGI_READ_TIMEOUT: 150
+      NGINX_CONF_INCLUDE: /var/www/html/docker-config/nginx/conf/*.conf
+      NGINX_REAL_IP_HEADER: X-Forwarded-For
+      NGINX_ALLOW_XML_ENDPOINTS: 1
+      NGINX_VHOST_PRESET: drupal9
+      NGINX_GZIP: "on"
+      NGINX_GZIP_VARY: "on"
+      NGINX_GZIP_MIN_LENGTH: 1024
+    restart: always
+    ports:
+      - "57.128.86.224:8080:8080"
+      - "57.128.86.224:443:443"
+    volumes:
+      - ./:/var/www/html
+      - ./docker-config/nginx/mime.types:/etc/nginx/mime.types
+  production_coolturate_varnish:
+    image: wodby/varnish
+    container_name: 'production_coolturate_varnish'
+    depends_on:
+      - production_coolturate_nginx
+    environment:
+      VARNISH_SECRET: secret
+      VARNISH_BACKEND_HOST: production_coolturate_nginx
+      VARNISH_BACKEND_PORT: 8080
+      VARNISHD_MEMORY_SIZE: 4G
+      VARNISH_BACKEND_FIRST_BYTE_TIMEOUT: 15s
+      VARNISH_GRACE: 4h
+      VARNISHD_VCL_SCRIPT: /etc/default.vcl
+      VARNISH_CONFIG_PRESET: drupal
+    restart: always
+    ports:
+      - "57.128.86.224:80:6081"
+      - "57.128.86.224:6082:6082"
+    volumes:
+      - ./docker-config/varnish/default.vcl:/etc/default.vcl
+      - /etc/timezone:/etc/timezone
+volumes:
+  production_coolturate_nginx:
+    driver: local
